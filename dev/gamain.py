@@ -12,7 +12,6 @@
 import sys
 
 
-
 # -----------------------------------------------------------------------------
 import PySide6 
 from __feature__ import snake_case, true_property # type: ignore[import-not-found]
@@ -32,6 +31,7 @@ from gaapp import QGAApp
 from ga_strategy_genes_mutation import GenesMutationStrategy
 from ga_problem_unknown_number import QUnknownNumberProblemPanel
 from ga_problem_open_box import QOpenBoxProblemPanel
+from ga_problem_geometry_optimisation import QGeometryOptimisationPanel
 
 
 
@@ -68,6 +68,7 @@ def main():
     # Problème de la boîte ouverte
     ga_app.add_solution_panel(QOpenBoxProblemPanel())                              # note : on passe une instance, pas une classe
 
+    ga_app.add_solution_panel(QGeometryOptimisationPanel())
     # 5) Affichage et exécution de l'application
     # -----------------------------------------------
     ga_app.show()

@@ -22,7 +22,6 @@ assert "snake_case" in feature.info() and "true_property" in feature.info()
 # -----------------------------------------------------------------------------
 
 
-
 # def perimeter_from_QRectF(rect):
 #     return 2. * (rect.width() + rect.height())
 
