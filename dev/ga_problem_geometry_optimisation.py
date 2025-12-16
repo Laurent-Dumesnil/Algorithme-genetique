@@ -170,18 +170,21 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
             p_inside = False
             shape_outside = False
 
+            frame = QPolygonF((QPointF(0, 0), QPointF(self.__width, self.__height)))
             
             
             for p in self._points:
                 if transformed_polygon.contains_point(p, Qt.OddEvenFill):
                     p_inside = True
 
-            if (b_rect.top_left().x() < 0 
-                or b_rect.top_left().y() < 0 
-                or b_rect.bottom_right().x() > self.__width 
-                or b_rect.bottom_right().y() > self.__height):
-                shape_outside = True
+            corner_x = [b_rect.top_left().x(), b_rect.top_right().x(), b_rect.bottom_right().x(), b_rect.bottom_left().x()]
+            corner_y = [b_rect.top_left().y(), b_rect.top_right().y(), b_rect.bottom_right().y(), b_rect.bottom_left().y()]
 
+            if (any([x < 0 for x in corner_x])
+                or any([y < 0 for y in corner_y])
+                or any([x > self.__width for x in corner_x])
+                or any([y > self.__height for y in corner_y])):
+                shape_outside = True
             
             unknown_value = process_area(transformed_polygon)
             if unknown_value <= 0 or unknown_value >= self._max_area or p_inside or shape_outside:
