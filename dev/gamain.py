@@ -55,6 +55,7 @@ def main():
     # -----------------------------------------------
     # Exemple : ajout d'une stratégie de mutation
     ga_app.add_mutation_strategy(GenesMutationStrategy)                             # note : on passe une classe, pas une instance
+    ga_app.add_mutation_strategy(OneMutationStrategy) 
 
     # 4) Ajout des panneaux de résolution de problème
     # -----------------------------------------------
