@@ -31,7 +31,7 @@ from __feature__ import snake_case, true_property # type: ignore[import-not-foun
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QGroupBox, QGridLayout, QSizePolicy, QComboBox, QLayout, QLabel
 from PySide6.QtGui import QImage, QPainter, QColor, QPolygonF, QPen, QBrush, QFont, QTransform, QPixmap
-from PySide6.QtCore import Slot, Qt, QSize, QPointF, QRectF, QSizeF
+from PySide6.QtCore import Slot, Qt, QSize, QPointF, QRectF, QSizeF, QRect, QPoint
 from math import pi, cos, sin
 
 # -----------------------------------------------------------------------------
@@ -103,6 +103,7 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
         self._max_area = self.__height * self.__width  #aire du canevas *** À Corriger avec solution optimale ***
 
         self._points = []
+        self._create_points()
 
         self._chosen_shape = None
 
@@ -165,13 +166,28 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
             
 
             transformed_polygon = transform.map(self._chosen_shape)
+            b_rect = transformed_polygon.bounding_rect()
+            p_inside = False
+            shape_outside = False
+
+            
+            
+            for p in self._points:
+                if transformed_polygon.contains_point(p, Qt.OddEvenFill):
+                    p_inside = True
+
+            if (b_rect.top_left().x() < 0 
+                or b_rect.top_left().y() < 0 
+                or b_rect.bottom_right().x() > self.__width 
+                or b_rect.bottom_right().y() > self.__height):
+                shape_outside = True
+
             
             unknown_value = process_area(transformed_polygon)
-            if unknown_value <= 0 or unknown_value >= self._max_area:
+            if unknown_value <= 0 or unknown_value >= self._max_area or p_inside or shape_outside:
                 return 0.0
             else:
                 return int(unknown_value)
-            # print(unknown_value)
         domains = Domains(np.array([[self._min_translate_x, self._max_translate_x],
                                     [self._min_translate_y, self._max_translate_y],
                                     [self._min_rotate, self._max_rotate],
@@ -251,7 +267,7 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
         if not fill:
             pen = QPen()
             pen.set_color(self._shape_color)
-            pen.set_width(2)
+            pen.set_width(1)
             painter.set_pen(pen)
             painter.set_brush(Qt.NoBrush)
         else:
@@ -274,8 +290,26 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
         self._draw_points(painter)
 
         if ga:
-            for transform in self._transform:
-                self._draw_rectangle(painter, transform, False)
+            fill = True
+            for chromosome in ga.population:
+                
+                translate_x = chromosome[0]
+                translate_y = chromosome[1]
+                rotation = chromosome[2]
+                scaling = chromosome[3]
+
+                transform = QTransform()
+            
+                #translate
+                transform.translate(translate_x, translate_y)
+
+                #Rotation
+                transform.rotate(rotation)
+                #scale
+                transform.scale(scaling, scaling)
+
+                self._draw_rectangle(painter, transform, fill)
+                fill = False
 
         painter.end()
         self._visualization_widget.image = image.to_image()
