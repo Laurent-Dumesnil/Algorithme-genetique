@@ -29,9 +29,11 @@ assert "snake_case" in feature.info() and "true_property" in feature.info()
 from gaapp import QGAApp
 
 from ga_strategy_genes_mutation import GenesMutationStrategy
+from ga_strategy_one_gene_mutation import OneGeneMutationStrategy
 from ga_problem_unknown_number import QUnknownNumberProblemPanel
 from ga_problem_open_box import QOpenBoxProblemPanel
 from ga_problem_geometry_optimisation import QGeometryOptimisationPanel
+from ga_problem_sound_wave_finder import QSoundWaveFinderPanel
 
 
 
@@ -41,7 +43,7 @@ def main():
     # -----------------------------------------------
     app = QApplication(sys.argv)
 
-    # 2) Instanciation de l'application
+    # 2) Insta1nciation de l'application
     # -----------------------------------------------
     ga_app = QGAApp()
 
@@ -55,7 +57,7 @@ def main():
     # -----------------------------------------------
     # Exemple : ajout d'une stratégie de mutation
     ga_app.add_mutation_strategy(GenesMutationStrategy)                             # note : on passe une classe, pas une instance
-    ga_app.add_mutation_strategy(OneMutationStrategy) 
+    ga_app.add_mutation_strategy(OneGeneMutationStrategy) 
 
     # 4) Ajout des panneaux de résolution de problème
     # -----------------------------------------------
@@ -70,6 +72,8 @@ def main():
     ga_app.add_solution_panel(QOpenBoxProblemPanel())                              # note : on passe une instance, pas une classe
 
     ga_app.add_solution_panel(QGeometryOptimisationPanel())
+
+    ga_app.add_solution_panel(QSoundWaveFinderPanel())
     # 5) Affichage et exécution de l'application
     # -----------------------------------------------
     ga_app.show()

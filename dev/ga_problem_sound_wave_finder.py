@@ -14,7 +14,7 @@
 
 import numpy as np
 from numpy.typing import NDArray
-import random
+import random, math
 
 
 # -----------------------------------------------------------------------------
@@ -22,9 +22,9 @@ import PySide6
 from __feature__ import snake_case, true_property # type: ignore[import-not-found]
 # -----------------------------------------------------------------------------
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QGroupBox, QGridLayout, QSizePolicy, QComboBox, QLayout, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox, QGridLayout, QSizePolicy, QComboBox, QLayout, QLabel, QPushButton
 from PySide6.QtGui import QImage, QPainter, QColor, QPolygonF, QPen, QBrush, QFont, QTransform, QPixmap
-from PySide6.QtCore import Slot, Qt, QSize, QPointF, QRectF, QSizeF, QRect, QPoint
+from PySide6.QtCore import Slot, Qt, QSize, QPointF, QRectF, QSizeF, QRect, QPoint, QMargins
 from math import pi, cos, sin
 
 # -----------------------------------------------------------------------------
@@ -43,10 +43,12 @@ from uqtgui import process_area
 class QSoundWaveFinderPanel(QSolutionToSolvePanel):
     """Panneau pour resoudre le problème de trouver le signal sinusoïdal qui est produit par les notes choisies."""
 
-    def __init__(self, width : int = 500, height : int = 250, notes: int = 1 , parent : QWidget | None = None)-> None:
+    def __init__(self, width : int = 500, height : int = 250, notes: int = 1 , octave: int = -1, volume : int = 1, parent : QWidget | None = None)-> None:
         super().__init__(parent)
 
-        self._points_scroll_bar, notes_layout = create_scroll_int_value(1, notes, 100)
+        self._notes_scroll_bar, notes_layout = create_scroll_int_value(1, notes, 10)
+        self._octave_scroll_bar, octave_layout = create_scroll_int_value(-1, octave, 9)
+        self._amplitude_scroll_bar, amplitude_layout = create_scroll_int_value(-1, volume, 1)
 
         self.__width = width
         self.__height = height
@@ -54,7 +56,21 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         param_group_box = QGroupBox('Paramètres')
         param_layout = QFormLayout(param_group_box)
         param_layout.add_row('Nombre de notes', notes_layout)
+        param_layout.add_row('Octave', octave_layout)
+        param_layout.add_row('Amplitude', amplitude_layout)
         param_group_box.size_policy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+
+        self._notes_scroll_bar.valueChanged.connect(self._update_from_configuration)
+        self._octave_scroll_bar.valueChanged.connect(self._update_button)
+
+        keyboard_group_box = QGroupBox('Keyboard')
+        keyboard_group_box.alignment = Qt.AlignmentFlag.AlignCenter
+        keyboard_group_box.size_policy = QSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        keyboard_layout = QGridLayout(keyboard_group_box)
+        
+        keyboard_container = self._create_keyboard()
+        keyboard_layout.add_widget(keyboard_container)
+        keyboard_layout.alignment = Qt.AlignmentFlag.AlignCenter
 
         visualization_group_box = QGroupBox('Visualisation')
         visualization_group_box.alignment = Qt.AlignmentFlag.AlignCenter
@@ -63,6 +79,16 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         self._visualization_widget = QImageViewer(True)
         visualization_layout.add_widget(self._visualization_widget)
         visualization_layout.alignment = Qt.AlignmentFlag.AlignCenter
+
+        layout = QVBoxLayout(self)
+        layout.add_widget(param_group_box)
+        layout.add_widget(keyboard_group_box)
+        layout.add_widget(visualization_group_box)
+
+        self._background_color = QColor(48, 48, 48)
+
+        self._notes = []
+        
 
     @property
     def name(self) -> str:
@@ -120,3 +146,110 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
     def _update_from_configuration(self):
         """Met à jour la visualisation de la boîte en fonction de la configuration."""
         pass
+    
+    def _update_button(self):
+        for btn in self._white_buttons:
+            btn.octave = self._octave_scroll_bar.value
+
+    def _key_pressed(self, key):
+        btn = self._buttons[key]
+        if len(self._notes) >= self._notes_scroll_bar.value:
+            self._notes.pop(0)
+        self._notes.append((btn.value, self._amplitude_scroll_bar.value))
+
+    def _create_keyboard(self):
+        """Nous avons utilisé ChatGPT pour générer un petit exemple sur lequel on s'est basé pour approcher deux problématiques
+        dans le code qui suit. C'est-à-dire l'utilisation du style_sheet pour la stylisation des widgets et la superposition de
+        deux layouts afin d'avoir les touches noires qui chevauchent les touches blanches."""
+        keyboard_container = QWidget()
+        keyboard_container.set_fixed_height(160)
+        keyboard_container.set_fixed_width(425)
+        keyboard_container.style_sheet = "background: transparent"
+
+        white_layout = QHBoxLayout(keyboard_container)
+        white_layout.spacing = 2
+        white_keys = ["C", "D", "E", "F", "G", "A", "B"]
+        self._buttons = {}
+
+        for key in white_keys:
+            btn = KeyboardButton(key, self._octave_scroll_bar.value)
+            btn.set_fixed_size(50, 120)
+            btn.clicked.connect(lambda _ : self._key_pressed(key))
+            btn.style_sheet= """
+            QPushButton {
+                background: white;
+                border: 1px solid;
+                text-align: bottom;
+                padding-bottom: 4px;
+            }
+            QPushButton:pressed {
+                background: #ddd;
+            }
+            """
+            self._buttons[key] = btn
+            white_layout.add_widget(btn)
+
+        black_container = QWidget(keyboard_container)
+        black_container.geometry = QRect(0, 0, 500, 100)
+        black_keys = [("C#", 45), ("D#", 105), ("F#", 220), ("G#", 275), ("A#", 335)]
+        self._black_buttons = {}
+        
+        for key, x in black_keys:
+            btn = KeyboardButton(key, self._octave_scroll_bar.value, black_container)
+            btn.set_fixed_size(40, 80)
+            btn.move(x, 0)
+            btn.clicked.connect(lambda _ : self._key_pressed(key))
+            btn.style_sheet= """
+            QPushButton {
+                background: black;
+                color : white;
+                border-radius: 4px;
+            }
+            QPushButton:pressed {
+                background: #444;
+            }
+            """
+            self._buttons[key] = btn
+            btn.raise_()
+
+        return keyboard_container
+
+
+class KeyboardButton(QPushButton):
+    _frequency = {
+        "C" : 16.3516015625,
+        "C#" : 17.32390625,
+        "D" : 18.3540625,
+        "D#" : 19.4454296875,
+        "E" : 20.60171875,
+        "F" : 21.8267578125,
+        "F#" : 23.1246484375,
+        "G" : 24.4997265625,
+        "G#" : 25.9565625,
+        "A": 27.5,
+        "A#" : 29.135234375,
+        "B" : 30.8676953125
+    }
+
+    def __init__(self, key, octave, parent = None):
+        super().__init__(key, parent)
+        self._key = key
+        self._octave = octave
+        self._value = KeyboardButton._frequency[key] * math.pow(2, octave + 2)
+
+    @property
+    def key(self):
+        return self._key
+    
+    @property
+    def value(self):
+        return self._value 
+    
+    @property
+    def octave(self):
+        return self._octave
+    
+    @octave.setter
+    def octave(self, value : int):
+        self._octave = value
+        self._value = KeyboardButton._frequency[self._key] * math.pow(2, self._octave + 2)
