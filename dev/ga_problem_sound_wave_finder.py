@@ -170,6 +170,9 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         engine_parameters.mutation_rate = 0.25
         return engine_parameters
     
+    def _update_from_simulation(self, ga):
+        pass
+    
     @Slot()
     def _update_from_configuration(self):
         """Met à jour la visualisation de la boîte en fonction de la configuration."""
