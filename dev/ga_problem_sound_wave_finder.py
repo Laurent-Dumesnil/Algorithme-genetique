@@ -53,6 +53,12 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         self.__width = width
         self.__height = height
 
+        self._duration = 1.0 # durée du son (en secondes)
+        self._sampling_rate = 100 # nombre de fois qu'un signal sonore est mesuré par seconde.
+        
+        self._reference_amplitude = 0.8 # amplitude recherché (de la courbe de référence)
+        self._reference_frequency = 420 # fréquence recherché (de la courbe de référence)
+
         param_group_box = QGroupBox('Paramètres')
         param_layout = QFormLayout(param_group_box)
         param_layout.add_row('Nombre de notes', notes_layout)
@@ -88,7 +94,15 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         self._background_color = QColor(48, 48, 48)
 
         self._notes = []
+
+
+        self._num_curve_points = int(self._duration * self._sampling_rate) # nombre de points choisi sur la courbe selon la durée du son
+        self._t_on_curve = np.linspace(0, self._duration, self._num_curve_points) # retourne un array des points sur la courbe (temps de référence à comparer)
+        self._reference_curve = (self._reference_amplitude * np.sin(2 * np.pi * self._reference_frequency * self._t_on_curve)) # la courbe de référence utilisant la formule de sinus => x = A*sin(F*t)
         
+
+    def reference_curve_constructor(self):
+        pass
 
     @property
     def name(self) -> str:
@@ -121,11 +135,25 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         La définition du problème inclue les domaines des chromosomes et la fonction objective.
         """
         def objective_fun(chromosome :NDArray) -> float:
-            pass
+            
+            amplitude = chromosome[0]
+            frequency = chromosome[1]
 
-        domains = Domains()
+            current_iteration_curve = amplitude * np.sin(2 * np.pi * frequency * self._t_on_curve)
+
+            dist_between_curves = np.mean((self._reference_curve - current_iteration_curve)**2)
+
+            return 1.0 / (1.0 + dist_between_curves)
+
+
+        domains = Domains(
+            np.array([[-1.0, 1.0],
+                      [20.0, 20000.0]]),
+                      ("Amplitude", "Fréquence")
+        )
 
         return ProblemDefinition(domains, objective_fun)
+    
     
     @property
     def default_parameters(self) -> Parameters:
