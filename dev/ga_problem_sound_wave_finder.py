@@ -24,7 +24,8 @@ from __feature__ import snake_case, true_property # type: ignore[import-not-foun
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox, QGridLayout, QSizePolicy, QComboBox, QLayout, QLabel, QPushButton
 from PySide6.QtGui import QImage, QPainter, QColor, QPolygonF, QPen, QBrush, QFont, QTransform, QPixmap
-from PySide6.QtCore import Slot, Qt, QSize, QPointF, QRectF, QSizeF, QRect, QPoint, QMargins
+from PySide6.QtCore import Slot, Qt, QSize, QPointF, QRectF, QSizeF, QRect, QPoint, QMargins, QObject
+from PySide6.QtCharts import QChart, QLineSeries, QValueAxis, QChartView
 from math import pi, cos, sin
 
 # -----------------------------------------------------------------------------
@@ -81,10 +82,10 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         visualization_group_box = QGroupBox('Visualisation')
         visualization_group_box.alignment = Qt.AlignmentFlag.AlignCenter
         visualization_group_box.size_policy = QSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
-        visualization_layout = QGridLayout(visualization_group_box)
-        self._visualization_widget = QImageViewer(True)
-        visualization_layout.add_widget(self._visualization_widget)
-        visualization_layout.alignment = Qt.AlignmentFlag.AlignCenter
+        self._visualization_layout = QGridLayout(visualization_group_box)
+        # self._visualization_widget = QImageViewer(True)
+        # self._visualization_layout.add_widget(self._visualization_widget)
+        self._visualization_layout.alignment = Qt.AlignmentFlag.AlignCenter
 
         layout = QVBoxLayout(self)
         layout.add_widget(param_group_box)
@@ -92,9 +93,12 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         layout.add_widget(visualization_group_box)
 
         self._background_color = QColor(48, 48, 48)
+        self._solution_color = QColor(76, 175, 80)
+        self._population_color = QColor(2, 119, 189)
+        self._best_color = QColor(255, 143, 0)
 
         self._notes = []
-
+        self._solution = None
 
         self._num_curve_points = int(self._duration * self._sampling_rate) # nombre de points choisi sur la courbe selon la durée du son
         self._t_on_curve = np.linspace(0, self._duration, self._num_curve_points) # retourne un array des points sur la courbe (temps de référence à comparer)
@@ -176,10 +180,36 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
     @Slot()
     def _update_from_configuration(self):
         """Met à jour la visualisation de la boîte en fonction de la configuration."""
+        chart = self._create_chart()
+        view = QChartView(chart)
+        self._visualization_layout.add_widget(view)
         pass
+
+    def _create_points(self):
+        x_total = np.zeros((100))
+        y_total = np.zeros((100))
+        for n in self._notes:
+            a = n[1]
+            f = n[0]
+            x = np.linspace(0., 10., 100)
+            y = a * np.sin(2 * np.pi * f * x) 
+            x_total += x
+            y_total += y
+        return (x_total, y_total)
+
+    def _create_chart(self):
+        chart = QChart()
+        line = QLineSeries()
+        # value = QValueAxis()
+        x, y = self._create_points()
+        line.append_np(x, y)
+        chart.add_series(line)
+
+        return chart
+        
     
     def _update_button(self):
-        for btn in self._white_buttons:
+        for btn in self._buttons.values():
             btn.octave = self._octave_scroll_bar.value
 
     def _key_pressed(self, key):
@@ -187,6 +217,7 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         if len(self._notes) >= self._notes_scroll_bar.value:
             self._notes.pop(0)
         self._notes.append((btn.value, self._amplitude_scroll_bar.value))
+        self._update_from_configuration()
 
     def _create_keyboard(self):
         """Nous avons utilisé ChatGPT pour générer un petit exemple sur lequel on s'est basé pour approcher deux problématiques
