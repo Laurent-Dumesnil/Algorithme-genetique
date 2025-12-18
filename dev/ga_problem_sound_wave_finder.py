@@ -44,12 +44,12 @@ from uqtgui import process_area
 class QSoundWaveFinderPanel(QSolutionToSolvePanel):
     """Panneau pour resoudre le problème de trouver le signal sinusoïdal qui est produit par les notes choisies."""
 
-    def __init__(self, width : int = 500, height : int = 250, notes: int = 1 , octave: int = -1, volume : int = 1, parent : QWidget | None = None)-> None:
+    def __init__(self, width : int = 500, height : int = 250, notes: int = 1 , octave: int = -1, volume : float = 0.5, parent : QWidget | None = None)-> None:
         super().__init__(parent)
 
         self._notes_scroll_bar, notes_layout = create_scroll_int_value(1, notes, 10)
         self._octave_scroll_bar, octave_layout = create_scroll_int_value(-1, octave, 9)
-        self._amplitude_scroll_bar, amplitude_layout = create_scroll_int_value(-1, volume, 1)
+        self._amplitude_scroll_bar, amplitude_layout = create_scroll_real_value(0, volume, 1, 6)
 
         self.__width = width
         self.__height = height
