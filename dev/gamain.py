@@ -30,6 +30,7 @@ from gaapp import QGAApp
 
 from ga_strategy_genes_mutation import GenesMutationStrategy
 from ga_strategy_one_gene_mutation import OneGeneMutationStrategy
+from ga_strategy_adaptive_mutation import AdaptiveMutationStrategy
 from ga_problem_unknown_number import QUnknownNumberProblemPanel
 from ga_problem_open_box import QOpenBoxProblemPanel
 from ga_problem_geometry_optimisation import QGeometryOptimisationPanel
@@ -58,6 +59,7 @@ def main():
     # Exemple : ajout d'une stratégie de mutation
     ga_app.add_mutation_strategy(GenesMutationStrategy)                             # note : on passe une classe, pas une instance
     ga_app.add_mutation_strategy(OneGeneMutationStrategy) 
+    ga_app.add_mutation_strategy(AdaptiveMutationStrategy) 
 
     # 4) Ajout des panneaux de résolution de problème
     # -----------------------------------------------
