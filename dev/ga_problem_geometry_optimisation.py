@@ -107,8 +107,11 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
 
         self._chosen_shape = None
 
-        self._transform = []
-        self._best_transform = None
+        transform = QTransform()
+        transform.translate(200, 100)
+        transform.rotate(0)
+        transform.scale(100, 100)
+        self._default_transform = transform
 
 
     @property
@@ -159,12 +162,7 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
             transform.rotate(rotation)
             #scale
             transform.scale(scaling, scaling)
-
-            if len(self._transform) > 10:
-                self._transform.pop(0)
-            self._transform.append(transform)
             
-
             transformed_polygon = transform.map(self._chosen_shape)
             b_rect = transformed_polygon.bounding_rect()
             p_inside = False
@@ -239,6 +237,8 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
         else :
            self._chosen_shape = self.create_polygone_by_side(5)
 
+        self._update_from_configuration()
+
         return self._chosen_shape
     
     def _create_points(self):
@@ -262,27 +262,29 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
 
         painter.restore()
 
-    def _draw_rectangle(self, painter : QPainter, transform : QTransform, fill : bool):
-        """Dessine un rectangle"""
+    def _draw_polygon(self, painter : QPainter, transform : QTransform, fill : bool):
+        """Dessine un polygone"""
 
-        painter.save()
+        if self._chosen_shape != None:
 
-        if not fill:
-            pen = QPen()
-            pen.set_color(self._shape_color)
-            pen.set_width(1)
-            painter.set_pen(pen)
-            painter.set_brush(Qt.NoBrush)
-        else:
-            painter.set_pen(Qt.NoPen)
-            painter.set_brush(self._shape_color)
+            painter.save()
 
-        # painter.set_transform(transform)
+            if not fill:
+                pen = QPen()
+                pen.set_color(self._shape_color)
+                pen.set_width(1)
+                painter.set_pen(pen)
+                painter.set_brush(Qt.NoBrush)
+            else:
+                painter.set_pen(Qt.NoPen)
+                painter.set_brush(self._shape_color)
 
-        shape = transform.map(self._chosen_shape)
-        painter.draw_polygon(shape)
+            # painter.set_transform(transform)
 
-        painter.restore()
+            shape = transform.map(self._chosen_shape)
+            painter.draw_polygon(shape)
+
+            painter.restore()
     
     def _update_from_simulation(self, ga : GeneticAlgorithm | None) -> None:  
         image = QPixmap(QSize(self.__width, self.__height))
@@ -291,6 +293,7 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
         painter.set_pen(Qt.NoPen)
 
         self._draw_points(painter)
+        
 
         if ga:
             fill = True
@@ -311,8 +314,10 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
                 #scale
                 transform.scale(scaling, scaling)
 
-                self._draw_rectangle(painter, transform, fill)
+                self._draw_polygon(painter, transform, fill)
                 fill = False
+        else:
+            self._draw_polygon(painter, self._default_transform, True)
 
         painter.end()
         self._visualization_widget.image = image.to_image()
