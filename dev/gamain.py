@@ -36,6 +36,7 @@ from ga_problem_open_box import QOpenBoxProblemPanel
 from ga_problem_geometry_optimisation import QGeometryOptimisationPanel
 from ga_problem_sound_wave_finder import QSoundWaveFinderPanel
 from ga_custom_strategy import GeometryMutationStrategy, GeneralMutationStrategy
+from ga_adaptiveMS import AdaptiveMs
 
 
 
@@ -62,7 +63,8 @@ def main():
     ga_app.add_mutation_strategy(OneGeneMutationStrategy) 
     ga_app.add_mutation_strategy(AdaptiveMutationStrategy)
     ga_app.add_mutation_strategy(GeometryMutationStrategy)
-    ga_app.add_mutation_strategy(GeneralMutationStrategy) 
+    ga_app.add_mutation_strategy(GeneralMutationStrategy)
+    ga_app.add_mutation_strategy(AdaptiveMs) 
 
     # 4) Ajout des panneaux de résolution de problème
     # -----------------------------------------------
