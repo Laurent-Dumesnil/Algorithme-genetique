@@ -77,6 +77,4 @@ class AdaptiveMutationStrategy(MutationStrategy):
 
         pass
 
-        # offsprings[mask2] += 
-
 
