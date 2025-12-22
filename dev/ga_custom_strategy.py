@@ -158,7 +158,6 @@ class ExploitativeMutationStrategy(MutationStrategy):
                 for gene in genes_cible:
                     val_min, val_max = domains.ranges[gene]
                     k = np.exp(-diversity * 5) 
-                    #k = np.exp(-diversity) 
                     amplitude = 0.1 * k * (val_max - val_min)
 
                     child[gene] += rng.normal(0, amplitude)

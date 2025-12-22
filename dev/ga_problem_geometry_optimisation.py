@@ -14,8 +14,9 @@
 # Julien Lamontagne
 # Guillaume Foisy
 # Eduardo Eugenio Gomez Torres
+# Mario Laframboise
 # -----------------------------------------
-# date : 8 décembre 2025
+# date : 22 décembre 2025
 # -----------------------------------------
 
 
@@ -29,9 +30,9 @@ import PySide6
 from __feature__ import snake_case, true_property # type: ignore[import-not-found]
 # -----------------------------------------------------------------------------
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QGroupBox, QGridLayout, QSizePolicy, QComboBox, QLayout, QLabel
-from PySide6.QtGui import QImage, QPainter, QColor, QPolygonF, QPen, QBrush, QFont, QTransform, QPixmap
-from PySide6.QtCore import Slot, Qt, QSize, QPointF, QRectF, QSizeF, QRect, QPoint
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QGroupBox, QGridLayout, QSizePolicy, QComboBox, QLabel
+from PySide6.QtGui import QPainter, QColor, QPolygonF, QPen, QTransform, QPixmap
+from PySide6.QtCore import Slot, Qt, QSize, QPointF, QRectF, QSizeF
 from math import pi, cos, sin
 
 # -----------------------------------------------------------------------------
@@ -43,7 +44,7 @@ assert "snake_case" in feature.info() and "true_property" in feature.info()
 from gacvm import Domains, ProblemDefinition, Parameters, GeneticAlgorithm
 from gaapp import QSolutionToSolvePanel
 
-from uqtwidgets import QImageViewer, create_scroll_real_value, create_scroll_int_value
+from uqtwidgets import QImageViewer, create_scroll_int_value
 from uqtgui import process_area
 
 class QGeometryOptimisationPanel(QSolutionToSolvePanel):
@@ -100,7 +101,7 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
         self._min_scale = 1
         self._max_scale = min(self.__width, self.__height)
         
-        self._max_area = self.__height * self.__width  #aire du canevas *** À Corriger avec solution optimale ***
+        self._max_area = self.__height * self.__width 
 
         self._points = []
         self._create_points()
@@ -170,23 +171,18 @@ Fonction objective :
             rotation = chromosome[2]
             scaling = chromosome[3]
 
-            #center = self._chosen_shape.center()
             transform = QTransform()
             
-            #translate
             transform.translate(translate_x, translate_y)
 
-            #Rotation
             transform.rotate(rotation)
-            #scale
+
             transform.scale(scaling, scaling)
             
             transformed_polygon = transform.map(self._chosen_shape)
             b_rect = transformed_polygon.bounding_rect()
             p_inside = False
             shape_outside = False
-
-            frame = QPolygonF((QPointF(0, 0), QPointF(self.__width, self.__height)))
             
             
             for p in self._points:
@@ -250,7 +246,6 @@ Fonction objective :
         if text == "Rectangle":
             self._chosen_shape = QRectF(QPointF(-0.5, -0.5), QSizeF(1, 1))
         elif text == "Triangle":
-            #self._chosen_shape = QPolygonF(QPointF(0, -0.5), QPointF(-0.5, 0.5), QPointF(0.5, 0.5))
             self._chosen_shape = self.create_polygone_by_side(3)
         else :
            self._chosen_shape = self.create_polygone_by_side(5)
@@ -297,14 +292,14 @@ Fonction objective :
                 painter.set_pen(Qt.NoPen)
                 painter.set_brush(self._shape_color)
 
-            # painter.set_transform(transform)
-
             shape = transform.map(self._chosen_shape)
             painter.draw_polygon(shape)
 
             painter.restore()
     
     def _update_from_simulation(self, ga : GeneticAlgorithm | None) -> None:  
+        if self._chosen_shape == None :
+            self._chosen_shape = self.create_polygone_by_side(3)
         image = QPixmap(QSize(self.__width, self.__height))
         image.fill(self._background_color)
         painter = QPainter(image)
@@ -324,12 +319,10 @@ Fonction objective :
 
                 transform = QTransform()
             
-                #translate
                 transform.translate(translate_x, translate_y)
 
-                #Rotation
                 transform.rotate(rotation)
-                #scale
+
                 transform.scale(scaling, scaling)
 
                 self._draw_polygon(painter, transform, fill)

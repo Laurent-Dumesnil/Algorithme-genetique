@@ -1,4 +1,13 @@
 
+#    ____   _____                       ___          __             ______ _           _           _____                 _ 
+#   / __ \ / ____|                     | \ \        / /            |  ____(_)         | |         |  __ \               | |
+#  | |  | | (___   ___  _   _ _ __   __| |\ \  /\  / /_ ___   _____| |__   _ _ __   __| | ___ _ __| |__) |_ _ _ __   ___| |
+#  | |  | |\___ \ / _ \| | | | '_ \ / _` | \ \/  \/ / _` \ \ / / _ \  __| | | '_ \ / _` |/ _ \ '__|  ___/ _` | '_ \ / _ \ |
+#  | |__| |____) | (_) | |_| | | | | (_| |  \  /\  / (_| |\ V /  __/ |    | | | | | (_| |  __/ |  | |  | (_| | | | |  __/ |
+#   \___\_\_____/ \___/ \__,_|_| |_|\__,_|   \/  \/ \__,_| \_/ \___|_|    |_|_| |_|\__,_|\___|_|  |_|   \__,_|_| |_|\___|_|
+                                                                                                                         
+                                                                                                                         
+
 # -----------------------------------------
 # Classes servant à afficher et résoudre le problème de trouver le signal sinusoïdal de notes choisies
 # -----------------------------------------
@@ -7,14 +16,16 @@
 # Julien Lamontagne
 # Guillaume Foisy
 # Eduardo Eugenio Gomez Torres
+# Mario Laframboise
 # -----------------------------------------
-# date : 16 décembre 2025
+# date : 22 décembre 2025
 # -----------------------------------------
 
 
 import numpy as np
 from numpy.typing import NDArray
-import random, math
+import math
+import gc
 
 
 # -----------------------------------------------------------------------------
@@ -22,11 +33,10 @@ import PySide6
 from __feature__ import snake_case, true_property # type: ignore[import-not-found]
 # -----------------------------------------------------------------------------
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox, QGridLayout, QSizePolicy, QComboBox, QLayout, QLabel, QPushButton
-from PySide6.QtGui import QImage, QPainter, QColor, QPolygonF, QPen, QBrush, QFont, QTransform, QPixmap
-from PySide6.QtCore import Slot, Qt, QSize, QPointF, QRectF, QSizeF, QRect, QPoint, QMargins, QObject
-from PySide6.QtCharts import QChart, QSplineSeries, QValueAxis, QChartView
-from math import pi, cos, sin
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox, QGridLayout, QSizePolicy, QLabel, QPushButton
+from PySide6.QtGui import QColor, QPen
+from PySide6.QtCore import Slot, Qt, QRect
+from PySide6.QtCharts import QChart, QSplineSeries, QChartView
 
 # -----------------------------------------------------------------------------
 from shibokensupport import feature # type: ignore[import-not-found]
@@ -37,8 +47,7 @@ assert "snake_case" in feature.info() and "true_property" in feature.info()
 from gacvm import Domains, ProblemDefinition, Parameters, GeneticAlgorithm
 from gaapp import QSolutionToSolvePanel
 
-from uqtwidgets import QImageViewer, create_scroll_real_value, create_scroll_int_value
-from uqtgui import process_area
+from uqtwidgets import create_scroll_real_value, create_scroll_int_value
 
 
 class QSoundWaveFinderPanel(QSolutionToSolvePanel):
@@ -69,12 +78,6 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         self._population_color = QColor(2, 119, 189)
         self._best_color = QColor(255, 143, 0)
 
-        self._duration = 1.0 # durée du son (en secondes)
-        self._sampling_rate = 100 # nombre de fois qu'un signal sonore est mesuré par seconde.
-        
-        self._reference_amplitude = 0.8 # amplitude recherché (de la courbe de référence)
-        self._reference_frequency = 420 # fréquence recherché (de la courbe de référence)
-
         param_group_box = QGroupBox('Paramètres')
         param_layout = QFormLayout(param_group_box)
         param_layout.add_row('Nombre de notes', notes_layout)
@@ -86,7 +89,6 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         self._octave_scroll_bar.valueChanged.connect(self._update_button)
 
         keyboard_group_box = QGroupBox('Keyboard')
-        # keyboard_box_layout = QHBoxLayout(keyboard_group_box)
         keyboard_group_box.alignment = Qt.AlignmentFlag.AlignCenter
         keyboard_group_box.size_policy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         keyboard_layout = QHBoxLayout(keyboard_group_box)
@@ -116,8 +118,6 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         visualization_group_box.alignment = Qt.AlignmentFlag.AlignCenter
         visualization_group_box.size_policy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         self._visualization_layout = QGridLayout(visualization_group_box)
-        # self._visualization_widget = QImageViewer(True)
-        # self._visualization_layout.add_widget(self._visualization_widget)
         chart = self._create_chart()
         self._view = QChartView(chart)
         self._view.set_fixed_height(200)
@@ -129,10 +129,6 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
         layout.add_widget(keyboard_group_box)
         layout.add_widget(visualization_group_box)
 
-    
-        self._num_curve_points = int(self._duration * self._sampling_rate) # nombre de points choisi sur la courbe selon la durée du son
-        self._t_on_curve = np.linspace(0, self._duration, self._num_curve_points) # retourne un array des points sur la courbe (temps de référence à comparer)
-        self._reference_curve = (self._reference_amplitude * np.sin(2 * np.pi * self._reference_frequency * self._t_on_curve)) # la courbe de référence utilisant la formule de sinus => x = A*sin(F*t)
         self._fill_selected_notes_layout()
 
     def reference_curve_constructor(self):
@@ -184,16 +180,6 @@ Fonction objective :
         
         La définition du problème inclue les domaines des chromosomes et la fonction objective.
         """
-        # def objective_fun(chromosome :NDArray) -> float:
-            
-        #     amplitude = chromosome[0]
-        #     frequency = chromosome[1]
-
-        #     current_iteration_curve = amplitude * np.sin(2 * np.pi * frequency * self._t_on_curve)
-
-        #     dist_between_curves = np.mean((self._reference_curve - current_iteration_curve)**2)
-
-        #     return 1.0 / (1.0 + dist_between_curves)
 
         def objective_fun(chromosome :NDArray) -> float:
             
@@ -206,8 +192,6 @@ Fonction objective :
 
             return 1.0 / (1.0 + dist_between_curves)
 
-        # domains_array = np.array([[0.0, 1.0], [16.3516015625, 31608.52]])
-        # domains_array = np.array([[16.3516015625, 31608.52], [0.0, 1.0]])
         domains_array = np.array([[16.3516015625, 123.47078125], [0.0, 1.0]])
         domains_array = np.tile(domains_array, (len(self._notes), 1))
         list = []
@@ -251,7 +235,6 @@ Fonction objective :
     def _create_chart(self):
         chart = QChart()
         line = QSplineSeries()
-        # value = QValueAxis()
         line.append_np(self._reference_x, self._reference_y)
         pen = QPen()
         pen.set_color(self._solution_color)
@@ -353,6 +336,7 @@ Fonction objective :
         return keyboard_container
     
     def _update_from_simulation(self, ga : GeneticAlgorithm | None) -> None: 
+        gc.collect()
         chart = self._create_chart()
         chart.legend().hide()
         self._visualization_layout
@@ -375,10 +359,8 @@ Fonction objective :
             line.set_pen(pen_population)
                 
             chart.add_series(line)
+            pen_population.set_width(0.5)
             for chromosome in ga.population[1:]:
-                pen_population = QPen()
-                pen_population.set_color(self._population_color)
-                pen_population.set_width(0.5)
                 for i in range(int(len(chromosome) / 2)):
                     notes.append((chromosome[i * 2], chromosome[(i * 2)+ 1]))
                 line = QSplineSeries()
@@ -386,22 +368,23 @@ Fonction objective :
                 line.append_np(x, y)
                 line.set_pen(pen_population)               
                 chart.add_series(line)
-            
-
-                
-
+        
     
     @Slot()
     def _update_from_configuration(self, event, key_pressed = False):
         """Met à jour la visualisation de la boîte en fonction de la configuration."""
         if not key_pressed:
             self._notes = []
+            self._notes.append((self._buttons["C"].value, self._octave_scroll_bar.value / 1000000))
             self._fill_selected_notes_layout()
         self._reference_x , self._reference_y = self._create_points(self._notes)
         self._update_from_simulation(None)
 
 
 class KeyboardButton(QPushButton):
+    """
+    Classe héritant de QPushButton et représentant des touches de clavier : elle contient les fréquences et les clefs de la touche correspondante.
+    """
     _frequency = {
         "C" : 16.3516015625,
         "C#" : 17.32390625,
