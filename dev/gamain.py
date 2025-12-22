@@ -8,9 +8,7 @@
 # Démarrage de l'application principale
 # -----------------------------------------
 
-
 import sys
-
 
 # -----------------------------------------------------------------------------
 import PySide6 
@@ -29,13 +27,11 @@ assert "snake_case" in feature.info() and "true_property" in feature.info()
 from gaapp import QGAApp
 
 from ga_strategy_genes_mutation import GenesMutationStrategy
-from ga_strategy_one_gene_mutation import OneGeneMutationStrategy
-from ga_strategy_adaptive_mutation import AdaptiveMutationStrategy
 from ga_problem_unknown_number import QUnknownNumberProblemPanel
 from ga_problem_open_box import QOpenBoxProblemPanel
 from ga_problem_geometry_optimisation import QGeometryOptimisationPanel
 from ga_problem_sound_wave_finder import QSoundWaveFinderPanel
-from ga_custom_strategy import GeometryMutationStrategy, GeneralMutationStrategy
+from ga_custom_strategy import GeometryMutationStrategy, GeneralMutationStrategy, ExploitativeMutationStrategy, MixedMutationStrategy
 from ga_adaptiveMS import AdaptiveMutationStrategies
 
 
@@ -60,11 +56,11 @@ def main():
     # -----------------------------------------------
     # Exemple : ajout d'une stratégie de mutation
     ga_app.add_mutation_strategy(GenesMutationStrategy)                             # note : on passe une classe, pas une instance
-    ga_app.add_mutation_strategy(OneGeneMutationStrategy) 
-    ga_app.add_mutation_strategy(AdaptiveMutationStrategy)
     ga_app.add_mutation_strategy(GeometryMutationStrategy)
     ga_app.add_mutation_strategy(GeneralMutationStrategy)
     ga_app.add_mutation_strategy(AdaptiveMutationStrategies) 
+    ga_app.add_mutation_strategy(ExploitativeMutationStrategy) 
+    ga_app.add_mutation_strategy(MixedMutationStrategy) 
 
     # 4) Ajout des panneaux de résolution de problème
     # -----------------------------------------------

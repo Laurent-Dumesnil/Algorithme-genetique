@@ -1,9 +1,28 @@
+#   ____                      __  __       _        _   _             ____  _             _                   
+#  / ___| ___ _ __   ___  ___|  \/  |_   _| |_ __ _| |_(_) ___  _ __ / ___|| |_ _ __ __ _| |_ ___  __ _ _   _ 
+# | |  _ / _ \ '_ \ / _ \/ __| |\/| | | | | __/ _` | __| |/ _ \| '_ \\___ \| __| '__/ _` | __/ _ \/ _` | | | |
+# | |_| |  __/ | | |  __/\__ \ |  | | |_| | || (_| | |_| | (_) | | | |___) | |_| | | (_| | ||  __/ (_| | |_| |
+#  \____|\___|_| |_|\___||___/_|  |_|\__,_|\__\__,_|\__|_|\___/|_| |_|____/ \__|_|  \__,_|\__\___|\__, |\__, |
+#                                                                                                 |___/ |___/ 
+
+# -----------------------------------------
+# Stratégie de mutation exploitative
+# -----------------------------------------
+# Auteurs :
+# Mario Laframboise
+# Laurent Dumesnil
+# Julien Lamontagne
+# Guillaume Foisy
+# Eduardo Eugenio Gomez Torres
+# -----------------------------------------
+# date : 22 décembre 2025
+# -----------------------------------------
+
 import numpy as np
 from numpy.typing import NDArray
 
 
 from gacvm import MutationStrategy, Domains
-from gacvm import CrossoverStrategy
 
 def local_exploration(index_local, editable_dim, offsprings, domains, rng):
         ranges = domains.ranges[:editable_dim]
@@ -28,17 +47,6 @@ def global_exploration(offsprings, domains, index_global, editable_dim, rng):
     maxs = ranges[:, 1]
 
     offsprings[index_global, :editable_dim] = rng.integers(mins, maxs, size=(index_global.size, editable_dim))
-
-def global_exploration_v2(offsprings, domains, index_other_mutate_multiple, genes_cible, rng):
-    for gene in genes_cible:
-                    val_min, val_max = domains.ranges[gene]
-                
-                    k = np.exp(-diversity * 5) 
-                    amplitude = 0.1 * k * (val_max - val_min)
-
-                    child[gene] += rng.normal(0, amplitude)
-                    child[gene] = np.clip(child[gene], val_min, val_max)
-                
 
 
 class GeometryMutationStrategy(MutationStrategy):
@@ -110,7 +118,7 @@ class GeneralMutationStrategy(MutationStrategy):
 
         # Masque pour savoir si on fait une exploration globale (True) ou locale (False)
         #70% va etre de l'exploration globale et 30% de l'exploration locale
-        mask_global = rng.random(index_mutate_children.size) <= 0.1
+        mask_global = rng.random(index_mutate_children.size) <= 0.9
 
         # Exploration Global
         index_global = index_mutate_children[mask_global]
@@ -127,7 +135,40 @@ class ExploitativeMutationStrategy(MutationStrategy):
     def __init__(self) -> None:
         super().__init__('Explotative Mutation Strategy')
 
-    #Décrémentation progressive du taux de mutation.
+    def mutate(self, offsprings: NDArray, mutation_rate: float, domains: Domains) -> None:
+        rng = np.random.default_rng()
+        stds = np.std(offsprings, axis=0)
+        ranges = domains.ranges[:, 1] - domains.ranges[:, 0]
+        diversity = np.mean(stds / ranges)
+        
+        #Pourcentage de chance de muter sur plus d'un gène
+        mutation_multiple = 0.3
+
+        n_dim = domains.ranges.shape[0]
+
+        for child in offsprings:
+            if rng.random() <= mutation_rate:
+                if rng.random() <= mutation_multiple:
+                    #Sélection des genes à muter
+                    nb_mutation = rng.integers(2, n_dim +1)
+                    genes_cible = rng.choice(n_dim, size = nb_mutation, replace = False)
+                else:
+                    genes_cible = [rng.integers(0, n_dim)]
+
+                for gene in genes_cible:
+                    val_min, val_max = domains.ranges[gene]
+                    k = np.exp(-diversity * 5) 
+                    #k = np.exp(-diversity) 
+                    amplitude = 0.1 * k * (val_max - val_min)
+
+                    child[gene] += rng.normal(0, amplitude)
+                    child[gene] = np.clip(child[gene], val_min, val_max)
+
+
+class MixedMutationStrategy(MutationStrategy):
+    """ Stratégie de mutation exploitative"""
+    def __init__(self) -> None:
+        super().__init__('Mixed Mutation')
 
     def mutate(self, offsprings: NDArray, mutation_rate: float, domains: Domains) -> None:
         rng = np.random.default_rng()
@@ -141,6 +182,7 @@ class ExploitativeMutationStrategy(MutationStrategy):
 
         for child in offsprings:
             if rng.random() <= mutation_rate:
+                #Validation du nombre de genes à muter.
                 if rng.random() <= mutation_multiple:
                     nb_mutation = rng.integers(2, n_dim +1)
                     genes_cible = rng.choice(n_dim, size = nb_mutation, replace = False)
@@ -149,8 +191,18 @@ class ExploitativeMutationStrategy(MutationStrategy):
 
                 for gene in genes_cible:
                     val_min, val_max = domains.ranges[gene]
-                    k = np.exp(-diversity * 5) 
-                    amplitude = 0.1 * k * (val_max - val_min)
+                    #10% de chance de faire la réinitialisation d'un gène (prendre une valeur aléatoire dans l'étendu de recherche)
+                    if rng.random() < 0.1:
+                        nb_reset = rng.integers(2, n_dim + 1)
+                        reset_genes = rng.choice(n_dim, size=nb_reset, replace=False)
+                        for gene in reset_genes:
+                            val_min, val_max = domains.ranges[gene]
+                            child[gene] = rng.uniform(val_min, val_max)
+                            continue
+                    else:
+                        #Application de la mutation en réduisant l'étendu de recherche.
+                        k = np.exp(-diversity * 5) 
+                        amplitude = 0.1 * k * (val_max - val_min)
 
-                    child[gene] += rng.normal(0, amplitude)
-                    child[gene] = np.clip(child[gene], val_min, val_max)
+                        child[gene] += rng.normal(0, amplitude)
+                        child[gene] = np.clip(child[gene], val_min, val_max)
