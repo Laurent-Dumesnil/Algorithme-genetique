@@ -36,7 +36,7 @@ from ga_problem_open_box import QOpenBoxProblemPanel
 from ga_problem_geometry_optimisation import QGeometryOptimisationPanel
 from ga_problem_sound_wave_finder import QSoundWaveFinderPanel
 from ga_custom_strategy import GeometryMutationStrategy, GeneralMutationStrategy
-from ga_adaptiveMS import AdaptiveMs
+from ga_adaptiveMS import AdaptiveMutationStrategies
 
 
 
@@ -55,7 +55,7 @@ def main():
     # Note : par défaut, l'algorithme possède une stratégie par défaut pour chaque étape fondamentale
     # -----------------------------------------------
     # ga_app.add_selection_strategy(...)
-    # ga_app.add_crossover_strategy(...)
+    #ga_app.add_crossover_strategy(...)
     # ga_app.add_mutation_strategy(...)
     # -----------------------------------------------
     # Exemple : ajout d'une stratégie de mutation
@@ -64,7 +64,7 @@ def main():
     ga_app.add_mutation_strategy(AdaptiveMutationStrategy)
     ga_app.add_mutation_strategy(GeometryMutationStrategy)
     ga_app.add_mutation_strategy(GeneralMutationStrategy)
-    ga_app.add_mutation_strategy(AdaptiveMs) 
+    ga_app.add_mutation_strategy(AdaptiveMutationStrategies) 
 
     # 4) Ajout des panneaux de résolution de problème
     # -----------------------------------------------

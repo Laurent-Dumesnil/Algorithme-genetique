@@ -3,7 +3,7 @@ from numpy.typing import NDArray
 
 
 from gacvm import MutationStrategy, Domains
-from gacvm import SelectionStrategy
+from gacvm import CrossoverStrategy
 
 def local_exploration(index_local, editable_dim, offsprings, domains, rng):
         ranges = domains.ranges[:editable_dim]
@@ -28,6 +28,16 @@ def global_exploration(offsprings, domains, index_global, editable_dim, rng):
     maxs = ranges[:, 1]
 
     offsprings[index_global, :editable_dim] = rng.integers(mins, maxs, size=(index_global.size, editable_dim))
+
+def global_exploration_v2(offsprings, domains, index_other_mutate_multiple, genes_cible, rng):
+    for gene in genes_cible:
+                    val_min, val_max = domains.ranges[gene]
+                
+                    k = np.exp(-diversity * 5) 
+                    amplitude = 0.1 * k * (val_max - val_min)
+
+                    child[gene] += rng.normal(0, amplitude)
+                    child[gene] = np.clip(child[gene], val_min, val_max)
                 
 
 
@@ -100,7 +110,7 @@ class GeneralMutationStrategy(MutationStrategy):
 
         # Masque pour savoir si on fait une exploration globale (True) ou locale (False)
         #70% va etre de l'exploration globale et 30% de l'exploration locale
-        mask_global = rng.random(index_mutate_children.size) <= 0.7
+        mask_global = rng.random(index_mutate_children.size) <= 0.1
 
         # Exploration Global
         index_global = index_mutate_children[mask_global]
@@ -112,9 +122,10 @@ class GeneralMutationStrategy(MutationStrategy):
         if index_local.size > 0:
             local_exploration(index_local, editable_dim, offsprings, domains, rng)
 
-class AdaptiveMutationStrategy(MutationStrategy):
+class ExploitativeMutationStrategy(MutationStrategy):
+    """ Stratégie de mutation exploitative"""
     def __init__(self) -> None:
-        super().__init__('Adaptive Mutation')
+        super().__init__('Explotative Mutation Strategy')
 
     #Décrémentation progressive du taux de mutation.
 
@@ -123,44 +134,23 @@ class AdaptiveMutationStrategy(MutationStrategy):
         stds = np.std(offsprings, axis=0)
         ranges = domains.ranges[:, 1] - domains.ranges[:, 0]
         diversity = np.mean(stds / ranges)
-        if diversity < 0.3:
-            adaptive_rate = min(1.0, mutation_rate*2)
-        else:
-            adaptive_rate = mutation_rate
-
+        
         mutation_multiple = 0.3
-        nb_genes_mutation_max = 3
 
         n_dim = domains.ranges.shape[0]
 
         for child in offsprings:
-            if rng.random() <= adaptive_rate:
+            if rng.random() <= mutation_rate:
                 if rng.random() <= mutation_multiple:
-                    nb_mutation = rng.integers(2, nb_genes_mutation_max +1)
+                    nb_mutation = rng.integers(2, n_dim +1)
                     genes_cible = rng.choice(n_dim, size = nb_mutation, replace = False)
                 else:
                     genes_cible = [rng.integers(0, n_dim)]
 
                 for gene in genes_cible:
                     val_min, val_max = domains.ranges[gene]
-                    if rng.random() < 0.1:
-                        nb_reset = rng.integers(2, nb_genes_mutation_max + 1)
-                        reset_genes = rng.choice(n_dim, size=nb_reset, replace=False)
-                        for gene in reset_genes:
-                            val_min, val_max = domains.ranges[gene]
-                            child[gene] = rng.uniform(val_min, val_max)
-                            continue
-                    else:
-                        k = np.exp(-diversity * 5) 
-                        amplitude = 0.1 * k * (val_max - val_min)
+                    k = np.exp(-diversity * 5) 
+                    amplitude = 0.1 * k * (val_max - val_min)
 
-                        child[gene] += rng.normal(0, amplitude)
-                        child[gene] = np.clip(child[gene], val_min, val_max)
-
-################################################################################################# Stratégie de sélection
-
-# class SelectGlobalParentStrategy(SelectionStrategy):
-#     def __init__(self) -> None:
-#         super().__init__('Select Global Parent Strategy')
-
-
+                    child[gene] += rng.normal(0, amplitude)
+                    child[gene] = np.clip(child[gene], val_min, val_max)
