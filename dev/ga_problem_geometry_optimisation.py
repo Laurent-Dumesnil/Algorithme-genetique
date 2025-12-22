@@ -124,10 +124,28 @@ class QGeometryOptimisationPanel(QSolutionToSolvePanel):
         """Retourne un résumé du problème."""
         return '''Le problème de l'optimisation géométrique consiste à placer une forme donnée dans son plus grand format sur un canevas, sans toucher les obstacles.'''
 
+
     @property
     def description(self) -> str:
-        """Retourne une description détaillée du problème."""
-        return '''On cherche à trouver la taille de la plus grande forme qui peut être placée sur ce canevas sans toucher aux points. Il est permis de faire des manipulations de translations horizontales et verticales, de rotations et d'homothétie.''' 
+        """Description du problème."""
+        return '''On cherche à trouver la taille de la plus grande forme qui peut être placée sur ce canevas sans toucher aux points. Il est permis de faire des manipulations de translations horizontales et verticales, de rotations et d'homothétie.
+
+Données initiales du problème : 
+    - zone de recherche : Les dimensions du canevas 500 x 250
+    - L'aire maximale : maximiser l'aire de la forme sans entrer en contact avec les points dans le canevas
+Dimension du problème : 
+    - d = 4
+    - d1 = Translation X
+    - d2 = Translation Y
+    - d3 = Rotation
+    - d4 = Homothétie
+Structure du chromosome :
+    - 1 gène représentant les 4 dimensions [Translation X, Translation Y, Rotation, Homothétie]
+Fonction objective :
+    - si la solution est hors du canevas ou si un des points est contenu à l'intérieur de la solution, la fitness est de 0 
+    - l'aire de la solution
+    - plus l'aire de la solution est grande, plus le score de la fonction fitness est élevé
+    '''
 
     @property
     def width(self):

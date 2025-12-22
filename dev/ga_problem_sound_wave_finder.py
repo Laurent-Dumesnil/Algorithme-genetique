@@ -42,7 +42,17 @@ from uqtgui import process_area
 
 
 class QSoundWaveFinderPanel(QSolutionToSolvePanel):
-    """Panneau pour resoudre le problème de trouver le signal sinusoïdal qui est produit par les notes choisies."""
+    """Panneau pour resoudre le problème de trouver le signal sinusoïdal qui est produit par les notes choisies.
+
+       Références monographie et manuels scolaires:
+       - Rumsey, F. et McCormick, T. (1998). Son & Enregistrement : Théorie et pratique. Eyrolles.
+       - Pohlmann, K.C. (2011). Principles of Digital Audio. McGrawHill.
+       - Benson, H., Lachance, M., Séguin, M., Villeneuve, B. et Marcheterre, B. (2016). Ondes, optique et physique moderne. Erpi Sciences.
+       - Séguin, M., Descheneau, J. et Tardif, B. (2010). Physique : Ondes et physique moderne. Erpi
+
+       Référence d'encyclopédie en ligne : 
+       - Note de musique. (2025, 12 novembre). Dans Wikipédia. https://fr.wikipedia.org/wiki/Note_de_musique  
+    """
 
     def __init__(self, width : int = 500, height : int = 250, notes: int = 1 , octave: int = -1, volume : float = 0.5, parent : QWidget | None = None)-> None:
         super().__init__(parent)
@@ -140,8 +150,23 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
 
     @property
     def description(self) -> str:
-        """Retourne une description détaillée du problème."""
-        return '''On cherche à trouver une  '''
+        """Description du problème."""
+        return ''' On cherche à trouver la courbe qui épouse le mieux la courbe de référence produite par les différentes notes sélectionnées par l'utilisateur.
+
+Données initiales du problème : 
+    - zone de recherche : 36 notes distribués sur 3 octaves. La note la plus grave possible est un Do un octave sous l'octave 0 et la note la plus aigu est un Si un octave plus haut que l'octave 0.
+    - La plus petite distance moyenne des points dessiner par la courbe de solution par rapport à la courbe de référence.
+Dimension du problème : 
+    - d = n dimensions (2 dimensions par note, maximum de 10 notes) ==> entre 2 et 20 dimensions
+    - d1 = Fréquence
+    - d2 = Amplitude
+Structure du chromosome :
+    - 1 gène représentant les 2 dimensions (pour une note) [Fréquence, Amplitude]
+Fonction objective :
+    - la distance entre les points de la courbe de solution et les points de la courbe de référence
+    - puisqu'on recherche la distance la plus petite, cette dernière est inversée pour garantir une maximisation
+    '''
+
     @property
     def width(self):
         """Retourne la largeur du canevas."""
