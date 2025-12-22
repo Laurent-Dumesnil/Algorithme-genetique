@@ -35,6 +35,7 @@ from ga_problem_unknown_number import QUnknownNumberProblemPanel
 from ga_problem_open_box import QOpenBoxProblemPanel
 from ga_problem_geometry_optimisation import QGeometryOptimisationPanel
 from ga_problem_sound_wave_finder import QSoundWaveFinderPanel
+from ga_custom_strategy import GeometryMutationStrategy, GeneralMutationStrategy
 
 
 
@@ -59,7 +60,9 @@ def main():
     # Exemple : ajout d'une stratégie de mutation
     ga_app.add_mutation_strategy(GenesMutationStrategy)                             # note : on passe une classe, pas une instance
     ga_app.add_mutation_strategy(OneGeneMutationStrategy) 
-    ga_app.add_mutation_strategy(AdaptiveMutationStrategy) 
+    ga_app.add_mutation_strategy(AdaptiveMutationStrategy)
+    ga_app.add_mutation_strategy(GeometryMutationStrategy)
+    ga_app.add_mutation_strategy(GeneralMutationStrategy) 
 
     # 4) Ajout des panneaux de résolution de problème
     # -----------------------------------------------
