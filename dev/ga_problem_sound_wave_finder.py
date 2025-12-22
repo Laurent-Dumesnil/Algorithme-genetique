@@ -329,6 +329,7 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
     
     def _update_from_simulation(self, ga : GeneticAlgorithm | None) -> None: 
         chart = self._create_chart()
+        chart.legend().hide()
         self._visualization_layout
         self._visualization_layout.remove_widget(self._view)
         self._view = QChartView(chart)
@@ -349,15 +350,17 @@ class QSoundWaveFinderPanel(QSolutionToSolvePanel):
             line.set_pen(pen_population)
                 
             chart.add_series(line)
-            # for chromosome in ga.population:
-            #     for i in range(int(len(chromosome) / 2)):
-            #         notes.append((chromosome[i * 2], chromosome[(i * 2)+ 1]))
-            #     line = QSplineSeries()
-            #     x, y = self._create_points((notes))
-            #     line.append_np(x, y)
-            #     line.set_pen(pen_population)
-                
-            #     chart.add_series(line)
+            for chromosome in ga.population[1:]:
+                pen_population = QPen()
+                pen_population.set_color(self._population_color)
+                pen_population.set_width(0.5)
+                for i in range(int(len(chromosome) / 2)):
+                    notes.append((chromosome[i * 2], chromosome[(i * 2)+ 1]))
+                line = QSplineSeries()
+                x, y = self._create_points((notes))
+                line.append_np(x, y)
+                line.set_pen(pen_population)               
+                chart.add_series(line)
             
 
                 
