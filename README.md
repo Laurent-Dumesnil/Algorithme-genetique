@@ -85,8 +85,8 @@ Stratégies de mutation
 **Prérequis :** Python 3.11+
 
 ```bash
-git clone https://github.com/Laurent-Dumesnil/K-Nearest-Neighbors
-cd K-Nearest-Neighbors
+git clone https://github.com/Laurent-Dumesnil/Algorithme-genetique
+cd Algorithme-genetique
 
 pip install numpy PySide6
 ```
