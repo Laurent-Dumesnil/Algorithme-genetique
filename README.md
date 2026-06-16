@@ -168,27 +168,27 @@ ga_app.add_mutation_strategy(MaStrategie)  # passer la classe, pas une instance
 ## Structure du projet
 
 ```
-├── gamain.py                         # Point d'entrée — configuration et lancement
-├── gaapp.py                          # Fenêtre principale QGAApp et QSolutionToSolvePanel
-├── gacvm.py                          # Moteur GA : Domains, ProblemDefinition, GeneticAlgorithm
+├── gamain.py                             # Point d'entrée — configuration et lancement
+├── gaapp.py                              # Fenêtre principale QGAApp et QSolutionToSolvePanel
+├── gacvm.py                              # Moteur GA : Domains, ProblemDefinition, GeneticAlgorithm
 │
-├── ga_problem_open_box.py            # Problème de la boîte ouverte
-├── ga_problem_geometry_optimisation.py # Problème d'optimisation géométrique
-├── ga_problem_unknown_number.py      # Problème du nombre inconnu
-├── ga_problem_sound_wave_finder.py   # Problème de reconstruction d'onde sonore
+├── ga_problem_open_box.py                # Problème de la boîte ouverte
+├── ga_problem_geometry_optimisation.py     # Problème d'optimisation géométrique
+├── ga_problem_unknown_number.py          # Problème du nombre inconnu
+├── ga_problem_sound_wave_finder.py       # Problème de reconstruction d'onde sonore
 │
-├── ga_strategy_genes_mutation.py     # Stratégie de mutation par réinitialisation complète
-├── ga_custom_strategy.py             # Stratégies : Geometry, General, Exploitative, Mixed
-├── ga_adaptiveMS.py                  # Stratégie adaptative (sélection probabiliste)
+├── ga_strategy_genes_mutation.py         # Stratégie de mutation par réinitialisation complète
+├── ga_custom_strategy.py                 # Stratégies : Geometry, General, Exploitative, Mixed
+├── ga_adaptiveMS.py                      # Stratégie adaptative (sélection probabiliste)
 │
-├── uqtwidgets.py                     # Widgets Qt utilitaires (QImageViewer, scrollbars)
-├── uqtgui.py                         # Utilitaires géométriques Qt (aire, périmètre)
-└── umath.py                          # Utilitaires mathématiques (clamp)
+├── uqtwidgets.py                         # Widgets Qt utilitaires (QImageViewer, scrollbars)
+├── uqtgui.py                             # Utilitaires géométriques Qt (aire, périmètre)
+└── umath.py                              # Utilitaires mathématiques (clamp)
 ```
 
 ---
 
-## Ce que j'ai appris
+## Réflexion
 
 Ce projet m'a permis de mettre en pratique la conception d'un moteur générique d'algorithme génétique entièrement découplé des problèmes qu'il résout. La partie la plus intéressante a été la conception des stratégies de mutation adaptatives — notamment l'idée d'utiliser la diversité de la population (écart-type / étendue) pour ajuster dynamiquement l'amplitude des mutations et éviter la convergence prématurée.
 
